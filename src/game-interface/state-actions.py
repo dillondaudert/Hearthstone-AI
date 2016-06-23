@@ -1,6 +1,51 @@
-# Add imports here later when testing is to be done
+# Fireplace-related imports do not appear to be necessary since this function
+# takes a player object
 
-### 6-16-16 ###
+def state_actions(player):
+  # In utils.py, player.hero.power appears to return an object representing
+  # the player's hero power. It does not appear to be explicity declared in
+  # player.py, so this check is similar to that used withing the 
+  # actionable_entities() function
+  if player.hero.power:
+    heropower = player.hero.power
+
+    if heropower.is_usable() and heropower.has_target():
+      # Another attribute defined nowhere else in the API
+      # Unsure what this returns as of yet, storing targets for now
+      hpowactions = heropower.targets
+
+  # Getting the hand directly from the player seems better than passing
+  # in the player's hand into our future function
+  for card in player.hand:
+    if card.is_playable():
+      # This next check appears to be for certain Druid class cards
+      if card.must_choose_one:
+        cardactions = card.choose_cards
+      if card.has_target():
+        cardactions = cardactions + card.targets
+      # The player attributes below appear to only be referenced during the
+      # Mulligan phase of a give game. Again, storing for now
+      if player.choice:
+        choiceactions = player.choice.cards
+
+  # Characters are defined are involved in functions and properties in player.py
+  for character in player.characters:
+    if character.can_attack():
+      attackactions = character.targets
+
+  # At the moment, returning a list of lists for the different types of actions
+  # seems like the most accessible option
+  actionlist = []
+  actionlist.append(hpowactions)
+  actionlist.append(cardactions)
+  actionlist.append(choiceactions)
+  actionlist.append(attackactions)
+  
+  return actionlist
+
+### Comments of variable declarations and previous research below ###
+
+## 6-16-16 ##
 
 # Variable may be set up to contain a game for state extraction
 # Does not need to be started, can assume state can still be extracted
@@ -17,7 +62,7 @@
 # The __init__ method of the players, and, in players.py, the can_pay_cost()
 # will be looked at later and this comment will be moved downward when used
 
-### 6-20-16 ###
+## 6-20-16 ##
 
 # Base actions in hearthstone
 # - play a card
@@ -27,10 +72,10 @@
 # - use weapon
 # - end turn
 
-coinFlip = CoinRules() 
+#coinflip = CoinRules() 
 # Needing to actually select player and play the game is unknown at this point
 
-selCards = MulliganRules()
+#selcards = MulliganRules()
 
 # Python inheritance in subclass definitions has the superclass in parentheses
 # This can be confusing when trying to find the arguments to initialization
@@ -41,34 +86,32 @@ selCards = MulliganRules()
 
 # This resulting file has been written backwards in terms of declarations as
 # API understanding increases
-botName = "bot"
-otherName = "other"
+#botname = "bot"
+#othername = "other"
 
 # Decks can be initialized without any cards due to the fact that the default
 # value for their "cards" attribute is an empty list
-botDeck = Deck()
-otherDeck = Deck()
+#botdeck = Deck()
+#otherdeck = Deck()
 
 # Players are initialized with a hero of "None" (equivalent to null)
-botHero = None
-otherHero = None
+#bothero = None
+#otherhero = None
 
-botPlayer = (botName, botDeck, botHero)
+#botplayer = (botname, botdeck, bothero)
 
 # Preference to keep variable names unique expressed here
 # Program is likely to end up being for proof-of-concept as opposed to
 # containing a robust function
-otherPlayer = (otherName, otherDeck, otherHero)
+#otherplayer = (othername, otherdeck, otherhero)
 
-### Get hero.power here ###
-
-bothPlayers = [botPlayer, otherPlayer]
+#bothplayers = [botplayer, otherplayer]
 
 # Within the __init__() function of a class, the "self" keyword can be
 # confusing if mistaken as another argument that needs to provided
-gameBase = BaseGame(bothPlayers)
+#gamebase = BaseGame(bothplayers)
 
-TheGame = Game(selCards, coinFlip, gameBase)
+#thegame = Game(selcards, coinflip, gamebase)
 # The pass keyword creates an unknown in the implementation that
 # creates the actual game instance. Assuming baseGame's __init handles it
 
@@ -78,7 +121,7 @@ TheGame = Game(selCards, coinFlip, gameBase)
 # the possible invalid actions from the possible types of errors).
 #   [InvalidAction raise in card.py]
 
-### From class ###
+## 6-20-16: From class ##
 
 # controller note: check player.py, returns self
 # actionable_entities in player.py...is this useful?
