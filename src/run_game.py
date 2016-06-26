@@ -8,10 +8,11 @@ from fireplace.game import Game
 from fireplace.player import Player
 from fireplace.utils import random_draft
 from fireplace import cards
-from fireplace.exceptions import GameOver
+from fireplace.exceptions import GameOver, InvalidAction
 from hearthstone.enums import CardClass, CardType
 import random
 import numpy as np
+import sys
 
 
 def initialize():
@@ -20,21 +21,23 @@ def initialize():
     """
     cards.db.initialize()
 
+
 def setup_game():
     """
     initializes a game between two players
+    Returns:
+        game: A game entity representing the start of the game after the mulligan phase
     """
 
-    #choose classes (no warrior, paladin, mage, or hunter)
-    classes = np.array((1, 2, 6, 7, 8, 9))
-    p1, p2 = list(np.random.choice(classes, 2))
-    p1 = CardClass(p1)
-    p2 = CardClass(p2)
+    #choose classes (priest, rogue, shaman, warlock)
+    p1 = random.randint(6, 9)
+    p2 = random.randint(6, 9)
     #initialize players and randomly draft decks
-    deck1 = random_draft(p1)
-    deck2 = random_draft(p2)
-    player1 = Player("Player1", deck1, p1.default_hero)
-    player2 = Player("Player2", deck2, p2.default_hero)
+    #pdb.set_trace()
+    deck1 = random_draft(CardClass(p1))
+    deck2 = random_draft(CardClass(p2))
+    player1 = Player("Player1", deck1, CardClass(p1).default_hero)
+    player2 = Player("Player2", deck2, CardClass(p2).default_hero)
     #begin the game
     game = Game(players=(player1, player2))
     game.start()
@@ -47,28 +50,91 @@ def setup_game():
     return game
 
 
-def get_actions(player, game):
+def get_actions(player):
     """
-    return:
-        a list of action tuples avalible for a player
-        in the current game state
+    generate a list of tuples representing all valid actions
     format:
-        (action, target)
-
-    *if target is N/A, it will be None
+        (actiontype, index, target)
     """
 
-    a = []
+    actions = []
 
-    # add hero power if useable
-        #if targetable, add a copy for each valid target
-    # add cards in hand
-        #if minion, add all possible play locations
-        #if spell, add all possible targets, if applicable
-    # add all minions that can attack and all targets avalible
-    # add hero attacking, if weapon equipt
+    #If the player is being given a choice, return only valid choices
+    if player.choice:
+        for card in player.choice.cards:
+            actions.append(("choose", card, None))
 
-    #return this enumerated list
+    else:
+        # add cards in hand
+        for index, card in enumerate(player.hand):
+            if card.is_playable():
+                # summonable minions (note some require a target on play)
+                if card.type == 4:
+                    if card.has_target():
+                        for target in card.targets:
+                            actions.append(("summon", index, target))
+                    else:
+                        actions.append(("summon", index, None, None))
+                # playable spells and weapons
+                elif card.has_target():
+                    for target in card.targets:
+                        actions.append(("spell", index, target))
+                else:
+                    actions.append(("spell", index, None))
+        # add targets avalible to minions that can attack
+        for position, minion in enumerate(player.field):
+            if minion.can_attack():
+                for target in minion.attack_targets:
+                    actions.append(("attack", position, target))
+        # add hero power and targets if applicable
+        if player.hero.power.is_usable():
+            if player.hero.power.has_target():
+                for target in player.hero.power.targets:
+                    actions.append(("hero_power", None, target))
+            else:
+                actions.append(("hero_power", None, None))
+        # add hero attacking if applicable
+        if player.hero.can_attack():
+            for target in player.hero.attack_targets:
+                actions.append(("hero_attack", None, target))
+        # add end turn
+        actions.append(("end_turn", None, None))
+
+    return actions
+
+
+def perform_action(a, player, game):
+    """
+    utilty to convert an action tuple
+    into an action input
+    Args:
+        a, a tuple representing (action, index, target)
+    """
+
+    if a[0] == "summon":
+        if a[2] is None:
+            player.hand[a[1]].play()
+        else:
+            player.hand[a[1]].play(a[2])
+    elif a[0] == "spell":
+        if a[2] is None:
+            player.hand[a[1]].play()
+        else:
+            player.hand[a[1]].play(a[2])
+    elif a[0] == "attack":
+        player.field[a[1]].attack(a[2])
+    elif a[0] == "hero_power":
+        if a[2] is None:
+            player.hero.power.use()
+        else:
+            player.hero.power.use(a[2])
+    elif a[0] == "hero_attack":
+        player.hero.attack(a[2])
+    elif a[0] == "end_turn":
+        game.end_turn()
+    elif a[0] == "choose":
+        #print("Player choosing card %r, " % a[1])
+        player.choice.choose(a[1])
 
 
 def get_state(game):
@@ -153,7 +219,6 @@ def get_state(game):
             s[i + 9] = p2.field[j].silenced*1
         i += 10
 
-
     #in hand
 
     #173-262, your cards in hand
@@ -178,4 +243,23 @@ def get_state(game):
     return s
 
 
-            
+def main():
+
+    initialize()
+    game = setup_game()
+    try:
+        while True:
+            if game.current_player.choice:
+                import pdb; pdb.set_trace()
+            actions = get_actions(game.current_player)
+            index = random.randint(0, len(actions)-1)
+            perform_action(actions[index], game.current_player, game)
+    except GameOver:
+        print('Game ended successfully')
+    except InvalidAction as err:
+        print('Invalid Action: ', err)
+    except:
+        print('Unexcepted error!!', sys.exc_info()[0])
+
+if __name__ == "__main__":
+    main()

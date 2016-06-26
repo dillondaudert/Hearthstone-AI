@@ -4,7 +4,12 @@ For all files directly related to the AI's functioning
 ####ai.py
 The driver for the AI
 
-####decision-process.py
+####interface.py
+Interface functions with Fireplace API
+- get list of possible actions
+- get state feature vector from Game object
+
+####dec_process.py
 - build the game tree
 - traverse the action tree to evaluate possible actions
 - return action decision
@@ -18,3 +23,4 @@ The driver for the AI
 ####dqn.py
 - stores deep q learning network to represent the model
 - used for the evaluator and the target network in the trainer
+
