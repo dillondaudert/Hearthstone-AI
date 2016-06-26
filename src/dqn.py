@@ -38,6 +38,7 @@ class DQN(object):
         self.tf_session.run(init_op)
         print("TF variables initialized!")
         self.tf_saver = tf.train.Saver()
+        self.model_path = previous_path
 
         if restore_previous:
             self.tf_saver.restore(self.tf_session, previous_path)

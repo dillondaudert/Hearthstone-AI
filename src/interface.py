@@ -140,13 +140,8 @@ def perform_action(a, player, game):
 def get_state(game):
     """
     return:
-        a list of features extracted from the
+        a numpy array features extracted from the
         supplied game.
-
-    p1 = active player
-
-    *only the cards in hand of the player who's
-     turn it is are evaluated
     """
 
     p1 = game.current_player
