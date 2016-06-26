@@ -1,0 +1,2 @@
+class GetStateError(Exception):
+    pass
