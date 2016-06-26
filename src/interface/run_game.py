@@ -26,14 +26,10 @@ def setup_game():
     """
 
     #choose classes (no warrior, paladin, mage, or hunter)
-    while True:
-        p1 = random.randint(1, 11)
-        p2 = random.randint(1, 11)
-        if all((p1, p2)) not in (3, 4, 5, 10):
-            print ("hero indexes: p1 "+str(p1)+"\n p2 "+str(p2))
-            p1 = CardClass(p1)
-            p2 = CardClass(p2)
-            break
+    classes = np.array((1, 2, 6, 7, 8, 9))
+    p1, p2 = list(np.random.choice(classes, 2))
+    p1 = CardClass(p1)
+    p2 = CardClass(p2)
     #initialize players and randomly draft decks
     deck1 = random_draft(p1)
     deck2 = random_draft(p2)
@@ -42,6 +38,11 @@ def setup_game():
     #begin the game
     game = Game(players=(player1, player2))
     game.start()
+
+    #Skip mulligan for now
+    for player in game.players:
+        cards_to_mulligan = random.sample(player.choice.cards, 0)
+        player.choice.choose(*cards_to_mulligan)
 
     return game
 
