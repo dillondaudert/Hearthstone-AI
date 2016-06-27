@@ -10,18 +10,15 @@ h2 = 5
 g1 = np.arange(40).reshape(2, 20)
 g2 = np.random.randint(-5,5,40).reshape(2,20)
 
-dqn = DQN(features, h1, h2)
+dqn = DQN(features, h1, h2, "models/dqn_1")
 with tf.Graph().as_default():
     dqn.build_model()
     with tf.Session() as dqn.tf_session:
         dqn._init_tf()
-        with tf.variable_scope("dqn", reuse=True):
-            dqn.tf_session.run(model, feed_dict={dqn.s_: g1})
-        dqn.model_path = "dqn_1"
-        dqn.save_model()
+        print(dqn.tf_session.run(dqn.model, feed_dict={dqn.s_: g1}))
     
     
 
-print(dqn.get_q_value(g1, "dqn", True))
-print(dqn.get_q_value(g1, "dqn", True))
-print(dqn.get_q_value(g1, "dqn", False))
+print(dqn.get_q_value(g1, "dqn"))
+print(dqn.get_q_value(g1, "dqn"))
+print(dqn.get_q_value(g1, "dqn"))

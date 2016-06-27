@@ -39,11 +39,12 @@ class DQN(object):
         init_op = tf.initialize_all_variables()
         self.tf_saver = tf.train.Saver()
         self.tf_session.run(init_op)
-        print("TF variables initialized!")
 
         if restore_previous:
             self.tf_saver.restore(self.tf_session, self.model_path)
-            print("Restoring from previous model in %s" % self.model_path)
+        else:
+            self.tf_saver.save(self.tf_session, self.model_path)
+
 
     def build_model(self):
         """
@@ -58,17 +59,10 @@ class DQN(object):
         self.s_ = tf.placeholder(tf.float32, shape=[None, self.features])
 
         with tf.variable_scope("dqn") as dqn:
-            model = self._dqn_eval()
+            self.model = self._dqn_eval()
 
         with tf.variable_scope("target") as target:
-            target = self._dqn_eval()
-
-    def save_model(self):
-        """
-        Save the model parameters in the path specified in self.model_path
-        """
-        self.tf_saver.save(self.tf_session, self.model_path)
-
+            self.target = self._dqn_eval()
         
     def train_model(self):
         """
@@ -83,7 +77,7 @@ class DQN(object):
         pass    
 
 
-    def get_q_value(self, g_state, v_scope, restore_previous=False):
+    def get_q_value(self, g_state, v_scope):
         """
         Get the q value of a particular game state.
         Builds the graph, restores previous model (if applicable), runs session.
@@ -99,7 +93,7 @@ class DQN(object):
             self.build_model()
             
             with tf.Session() as self.tf_session:
-                self._init_tf(restore_previous) 
+                self._init_tf(True) 
                 with tf.variable_scope(v_scope, reuse=True):
                     q_val = self._dqn_eval()
                 ret = self.tf_session.run(q_val, feed_dict={self.s_: g_state})
@@ -110,7 +104,7 @@ class DQN(object):
 
     def _relu(self, input, l_shape, b_shape):
         #Create weights variable
-        weights = tf.get_variable("weights", l_shape, initializer=tf.random_normal_initializer(0.0, stddev=0.35))
+        weights = tf.get_variable("weights", l_shape, initializer=tf.random_normal_initializer(0.0, stddev=0.75))
         #Create biases
         biases = tf.get_variable("biases", b_shape, initializer=tf.constant_initializer(0.0))
         #Return layer calculation

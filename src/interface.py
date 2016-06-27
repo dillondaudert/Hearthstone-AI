@@ -1,8 +1,7 @@
-"""
-run-game.py
--basic UI between the NN and simulation
--utilities to initialize and run games
-"""
+
+#basic UI between the NN and simulation
+#utilities to initialize and run games
+
 
 from fireplace.game import Game
 from fireplace.player import Player
@@ -237,16 +236,13 @@ def get_state(game):
 
     return s
 
-
-def main():
-
+if __name__ == "__main__":
     initialize()
     game = setup_game()
     try:
         while True:
             if game.current_player.choice:
-                import pdb; pdb.set_trace()
-            actions = get_actions(game.current_player)
+                actions = get_actions(game.current_player)
             index = random.randint(0, len(actions)-1)
             perform_action(actions[index], game.current_player, game)
     except GameOver:
@@ -255,6 +251,3 @@ def main():
         print('Invalid Action: ', err)
     except:
         print('Unexcepted error!!', sys.exc_info()[0])
-
-if __name__ == "__main__":
-    main()

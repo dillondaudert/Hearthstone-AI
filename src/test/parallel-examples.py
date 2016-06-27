@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import numpy as np
 import random
+from dqn import DQN
 from interface import get_actions, get_state, perform_action
 from fireplace.game import Game
 from fireplace.Player import Player
@@ -19,7 +20,7 @@ from fireplace.exceptions import GameOver, InvalidAction
     #(global) Hard limit for # evaluations is reached
     #Return action associated with the highest Q value in q_vals  
     #(trainer) If action is end turn, save state vector and reward in transition
-def look_ahead(game: Game):
+def look_ahead(game: Game, dqn: DQN):
     """
     From a given game state, return an action to be performed.
     Args:
@@ -42,13 +43,14 @@ def look_ahead(game: Game):
 
     #For each action:
 
-def eval_game(game: Game, action, q_vals, queue, root_index, root=True):
+def eval_game(game: Game, dqn: DQN, action, q_vals, queue, root_index, root=True):
     """
     Called by look_ahead function. Used to evaluate a state, update Q value,
     enumerate and enqueue possible child actions.
     By default, this treats the root actions first.
     Args:
         game, A Game object to be evaluated
+        dqn, A deep Q learning network object to evaluate state
         action, A tuple representing an action and its optional target
         q_vals, A shared mem array for the global Q vales
         queue, A Queue to store child actions
@@ -63,7 +65,12 @@ def eval_game(game: Game, action, q_vals, queue, root_index, root=True):
     state = get_state(game)
     
     #Pass to Tensorflow here to evaluate
+    s_val = dqn.get_q_value(state, "dqn")
 
+    print("Action:", action)
+    print("Q value: %f", s_val)
+
+    """
     #   (global) Update root action with evaluation if larger
     if s_val > q_vals[root_index]:
         q_vals[root_index] = s_val
@@ -71,5 +78,5 @@ def eval_game(game: Game, action, q_vals, queue, root_index, root=True):
     #   (global) Hash state vectors
 
     #   (global) Add all nonduplicate post-action game objects to Queue
-    queue.put((game, root_index))
-
+    queue.put((game, root_index, s_val))
+    """
