@@ -58,12 +58,16 @@ def look_ahead(game: Game, dqn: DQN):
     queue = mp.Queue()
 
     #spawn # of worker processes equal to # of cores
-    with mp.Pool() as pool:
-        #apply evaluate function to each action in list
-        for index, action in enumerate(actions):
-            pool.apply(eval_game, (game, dqn, action, queue, index))
-        pool.close()
-        pool.join()
+
+    processes = []
+    print("%d actions!" % len(actions))
+
+    for index in range(len(actions)):
+        processes.append(mp.Process(target=eval_game, args=(game, dqn, actions[index], queue, index)))
+        processes[index].start()
+
+    for index in range(len(actions)):
+        processes[index].join()
 
     #Play highest Q value
     q_list = list(q_vals)
@@ -96,9 +100,13 @@ def eval_game(game: Game, dqn: DQN, action, queue, root_index, root=True):
     if action[0] != "end_turn":
         perform_action(action, game.current_player, game)
     state = get_state(game)
+    print("Got state in process %d" % root_index)
+    sys.stdout.flush()
     
     #Pass to Tensorflow here to evaluate
     s_val = dqn.get_q_value(state, "dqn")
+    print("Got Q value in process %d" % root_index)
+    sys.stdout.flush()
 
     #   (global) Update root action with evaluation if larger
     if s_val > q_vals[root_index]:

@@ -17,11 +17,13 @@ for i in range(5):
 
 a = [(1., 2., 0), (2., 3., 1), (3., 4., 2)]
 
-with mp.Pool() as pool:
-    for tupl in a:
-        pool.apply_async(act, tupl, callback=callb)
-        
-    pool.close()
-    pool.join()
+processes = []
+
+for index in range(3):
+    processes.append(mp.Process(target=act, args=a[index]))
+    processes[index].start()
+
+for index in range(3):
+    processes[index].join()
 
 print(list(q_vals))
