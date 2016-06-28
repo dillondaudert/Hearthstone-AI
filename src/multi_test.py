@@ -1,16 +1,27 @@
 import multiprocessing as mp
+import sys
 
 def callb(result):
     print(result)
+    sys.stdout.flush()
 
-def act(a, b):
+def act(a, b, index):
     c = a + b
-    print(c)
+    q_vals[index] = c
+    return c
+    
 
-a = [(1, 2), (2, 3), (3, 4)]
-arg1 = 'hi'
-arg2 = 'lo'
-arg3 = 5
+q_vals = mp.Array('f', 5)
+for i in range(5):
+    q_vals[i] = 0.0
+
+a = [(1., 2., 0), (2., 3., 1), (3., 4., 2)]
 
 with mp.Pool() as pool:
-    pool.apply(act, a)
+    for tupl in a:
+        pool.apply_async(act, tupl, callback=callb)
+        
+    pool.close()
+    pool.join()
+
+print(list(q_vals))

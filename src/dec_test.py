@@ -14,6 +14,7 @@ from fireplace.utils import play_turn
 
 
 def main():
+
     #Set up the network for the first time
     features = 263
     h1 = 50

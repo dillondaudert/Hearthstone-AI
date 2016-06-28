@@ -61,12 +61,13 @@ def look_ahead(game: Game, dqn: DQN):
     with mp.Pool() as pool:
         #apply evaluate function to each action in list
         for index, action in enumerate(actions):
-            pool.apply_async(eval_game, (game, dqn, action, q_vals, queue, index,))
+            pool.apply(eval_game, (game, dqn, action, queue, index))
         pool.close()
         pool.join()
 
     #Play highest Q value
     q_list = list(q_vals)
+    #import pdb; pdb.set_trace()
     print(q_list)
     best_action = actions[q_list.index(max(q_list))]
     return best_action
@@ -74,7 +75,7 @@ def look_ahead(game: Game, dqn: DQN):
 
 
 
-def eval_game(game: Game, dqn: DQN, action, q_vals, queue, root_index, root=True):
+def eval_game(game: Game, dqn: DQN, action, queue, root_index, root=True):
     """
     Called by look_ahead function. Used to evaluate a state, update Q value,
     enumerate and enqueue possible child actions.

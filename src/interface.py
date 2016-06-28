@@ -9,6 +9,7 @@ from fireplace.utils import random_draft
 from fireplace import cards
 from fireplace.exceptions import GameOver, InvalidAction
 from hearthstone.enums import CardClass, CardType
+from exceptions import UnhandledAction
 import random
 import numpy as np
 import sys
@@ -134,6 +135,8 @@ def perform_action(a, player, game):
     elif a[0] == "choose":
         #print("Player choosing card %r, " % a[1])
         player.choice.choose(a[1])
+    else:
+        raise UnhandledAction
 
 
 def get_state(game):
