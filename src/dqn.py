@@ -25,6 +25,7 @@ class DQN(object):
         #Tensorflow objects for the AI
         self.tf_session = None
         self.tf_saver = None
+        self.tf_graph = tf.Graph()
 
         self.model_path = model_path
 
@@ -89,8 +90,8 @@ class DQN(object):
             q_val: The Q value associated with this state (i.e. this action)
         """
         
-        with tf.Graph().as_default():
-            self.build_model()
+        with self.tf_graph.as_default():
+            #self.build_model()
             
             with tf.Session() as self.tf_session:
                 self._init_tf(True) 
