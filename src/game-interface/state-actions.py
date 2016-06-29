@@ -2,6 +2,13 @@
 # takes a player object
 
 def state_actions(player):
+  # Declaring lists to have elements inserted into in advance
+  # Note that this is different than using .append for inserting lists into
+  # another list, which is used at the end of the function
+  cardactions = []
+  choiceactions = []
+  attackactions = []
+
   # In utils.py, player.hero.power appears to return an object representing
   # the player's hero power. It does not appear to be explicity declared in
   # player.py, so this check is similar to that used withing the 
@@ -20,18 +27,21 @@ def state_actions(player):
     if card.is_playable():
       # This next check appears to be for certain Druid class cards
       if card.must_choose_one:
-        cardactions = card.choose_cards
+        cardactions = cardactions + card.choose_cards
+
+      # This checks for multiple possibilities for various targets on the field
       if card.has_target():
         cardactions = cardactions + card.targets
+
       # The player attributes below appear to only be referenced during the
       # Mulligan phase of a give game. Again, storing for now
       if player.choice:
-        choiceactions = player.choice.cards
+        choiceactions = choiceactions + player.choice.cards
 
   # Characters are defined are involved in functions and properties in player.py
   for character in player.characters:
     if character.can_attack():
-      attackactions = character.targets
+      attackactions = attackactions + character.targets
 
   # At the moment, returning a list of lists for the different types of actions
   # seems like the most accessible option
