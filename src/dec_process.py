@@ -67,7 +67,6 @@ def look_ahead(game: Game, dqn: DQN):
 
     #Evalute the game tree (to be expanded)
     processes = []
-    print("%d actions!" % len(actions))
 
     for index in range(len(actions)):
         processes.append(mp.Process(target=eval_game, args=(game, dqn, actions[index], queue, s_queue, index)))
@@ -81,7 +80,7 @@ def look_ahead(game: Game, dqn: DQN):
     
     #Play highest Q value
     q_list = list(q_vals)
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     print(q_list)
     best_action = actions[q_list.index(max(q_list))]
     return best_action
@@ -119,11 +118,8 @@ def tf_worker(dqn: DQN, s_queue, q_vals):
             else:
                 q_vals[index] = s_val
             index, state = s_queue.get(True, 5)
-        print("Done evaluating game tree\n")
-        sys.stdout.flush()
-    except mp.Queue.Empty as e:
+    except:
         print("Exception! Waited to long for task in state queue.\n")
-        print(e)
         sys.stdout.flush()
         
              

@@ -111,32 +111,39 @@ def perform_action(a, player, game):
         a, a tuple representing (action, index, target)
     """
 
-    if a[0] == "summon":
-        if a[2] is None:
-            player.hand[a[1]].play()
+    try:
+
+        if a[0] == "summon":
+            if a[2] is None:
+                player.hand[a[1]].play()
+            else:
+                player.hand[a[1]].play(a[2])
+        elif a[0] == "spell":
+            if a[2] is None:
+                player.hand[a[1]].play()
+            else:
+                player.hand[a[1]].play(a[2])
+        elif a[0] == "attack":
+            player.field[a[1]].attack(a[2])
+        elif a[0] == "hero_power":
+            if a[2] is None:
+                player.hero.power.use()
+            else:
+                player.hero.power.use(a[2])
+        elif a[0] == "hero_attack":
+            player.hero.attack(a[2])
+        elif a[0] == "end_turn":
+            game.end_turn()
+        elif a[0] == "choose":
+            #print("Player choosing card %r, " % a[1])
+            player.choice.choose(a[1])
         else:
-            player.hand[a[1]].play(a[2])
-    elif a[0] == "spell":
-        if a[2] is None:
-            player.hand[a[1]].play()
-        else:
-            player.hand[a[1]].play(a[2])
-    elif a[0] == "attack":
-        player.field[a[1]].attack(a[2])
-    elif a[0] == "hero_power":
-        if a[2] is None:
-            player.hero.power.use()
-        else:
-            player.hero.power.use(a[2])
-    elif a[0] == "hero_attack":
-        player.hero.attack(a[2])
-    elif a[0] == "end_turn":
-        game.end_turn()
-    elif a[0] == "choose":
-        #print("Player choosing card %r, " % a[1])
-        player.choice.choose(a[1])
-    else:
-        raise UnhandledAction
+            raise UnhandledAction
+    except UnhandledAction:
+        print("Attempted to take an inappropriate action!\n")
+        print(a)
+    except GameOver:
+        raise
 
 
 def get_state(game):
