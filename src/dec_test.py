@@ -1,5 +1,4 @@
 #Script to test the decision tree evaluation process
-import tensorflow as tf
 import numpy as np
 from dqn import DQN
 from dec_process import look_ahead
@@ -21,10 +20,6 @@ def main():
     h2 = 50
 
     dqn = DQN(features, h1, h2, "models/test_1")
-    with tf.Graph().as_default():
-        dqn.build_model()
-        with tf.Session() as dqn.tf_session:
-            dqn._init_tf()
 
     #Initialize the game
     initialize()

@@ -11,8 +11,10 @@
 import multiprocessing as mp
 import numpy as np
 import random
+import tensorflow as tf
+from math import isclose
 from dqn import DQN
-from interface import get_actions, get_state, perform_action
+from interface import *
 from fireplace.game import Game
 from fireplace.player import Player
 from fireplace.exceptions import GameOver, InvalidAction
@@ -56,30 +58,80 @@ def look_ahead(game: Game, dqn: DQN):
         q_vals[i] = 0.0
     #A queue of (game, root_index) pairs representing leaves of the game tree
     queue = mp.Queue()
+    #A queue of (index, numpy array) pairs to evaluate by tf_worker
+    s_queue = mp.Queue()
 
-    #spawn # of worker processes equal to # of cores
 
+    tf_proc = mp.Process(target=tf_worker, args=(dqn, s_queue, q_vals))
+    tf_proc.start()
+
+    #Evalute the game tree (to be expanded)
     processes = []
     print("%d actions!" % len(actions))
 
     for index in range(len(actions)):
-        processes.append(mp.Process(target=eval_game, args=(game, dqn, actions[index], queue, index)))
+        processes.append(mp.Process(target=eval_game, args=(game, dqn, actions[index], queue, s_queue, index)))
         processes[index].start()
 
     for index in range(len(actions)):
         processes[index].join()
 
+    s_queue.put( (-1, 0) )
+    tf_proc.join()
+    
     #Play highest Q value
     q_list = list(q_vals)
-    #import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     print(q_list)
     best_action = actions[q_list.index(max(q_list))]
     return best_action
 
+def tf_worker(dqn: DQN, s_queue, q_vals):
+    """
+    A single process that removes evaluation tasks from a queue.
+    It constructs the TF network and uses it to evaluate board states sent to it.
+    Args:
+        dqn, an uninitialized TensorFlow object representing the DQN
+        s_queue, the queue of board states.
+    Returns:
+        self
+    """
+
+   #Perform TensorFlow initialization 
+    with tf.Graph().as_default() as dqn.tf_graph:
+        dqn.build_model() 
+        with tf.Session() as dqn.tf_session:
+            dqn._init_tf()
+
+    try:
+        index, state = s_queue.get(True, 5)
+        while index != -1:
+            #Reshape to align with network input.
+            state = state.reshape(1, 263)
+            #Pass to Tensorflow here to evaluate
+            s_val = dqn.get_q_value(state, "dqn")
+            print("Got Q value %f for root %d" % (s_val, index))
+            sys.stdout.flush()
+
+            #   (global) Update root action with evaluation; average child values
+            if not isclose(q_vals[index], 0.0, rel_tol=1e-6):
+                q_vals[index] = (q_vals[index] + s_val)/2
+            else:
+                q_vals[index] = s_val
+            index, state = s_queue.get(True, 5)
+        print("Done evaluating game tree\n")
+        sys.stdout.flush()
+    except mp.Queue.Empty as e:
+        print("Exception! Waited to long for task in state queue.\n")
+        print(e)
+        sys.stdout.flush()
+        
+             
 
 
 
-def eval_game(game: Game, dqn: DQN, action, queue, root_index, root=True):
+
+def eval_game(game: Game, dqn: DQN, action, queue, s_queue, root_index, root=True):
     """
     Called by look_ahead function. Used to evaluate a state, update Q value,
     enumerate and enqueue possible child actions.
@@ -88,8 +140,8 @@ def eval_game(game: Game, dqn: DQN, action, queue, root_index, root=True):
         game, A Game object to be evaluated
         dqn, A deep Q learning network object to evaluate state
         action, A tuple representing an action and its optional target
-        q_vals, A shared mem array for the global Q vales
-        queue, A Queue to store child actions
+        queue, A Queue to save child actions
+        s_queue, A Queue to send state evaluation tasks
         root_index, The index of the root action in q_vals
         root(=True), Whether or not these are the root actions
     Returns:
@@ -100,17 +152,9 @@ def eval_game(game: Game, dqn: DQN, action, queue, root_index, root=True):
     if action[0] != "end_turn":
         perform_action(action, game.current_player, game)
     state = get_state(game)
-    print("Got state in process %d" % root_index)
-    sys.stdout.flush()
     
-    #Pass to Tensorflow here to evaluate
-    s_val = dqn.get_q_value(state, "dqn")
-    print("Got Q value in process %d" % root_index)
-    sys.stdout.flush()
-
-    #   (global) Update root action with evaluation if larger
-    if s_val > q_vals[root_index]:
-        q_vals[root_index] = s_val
+    s_queue.put( (root_index, state) )
+    
     """
 
     #   (global) Hash state vectors
