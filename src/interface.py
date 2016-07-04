@@ -49,6 +49,24 @@ def setup_game():
 
     return game
 
+def setup_basic_game():
+    p1 = 6 #priest
+    p2 = 7 #rogue
+
+    deck1 = random_draft(CardClass(p1))
+    deck2 = random_draft(CardClass(p2))
+    player1 = Player("Player1", deck1, CardClass(p1).default_hero)
+    player2 = Player("Player2", deck2, CardClass(p2).default_hero)
+    game = Game(players=(player1, player2))
+    game.start()
+
+    #Skip mulligan
+    for player in game.players:
+        cards_to_mulligan = random.sample(player.choice.cards, 0)
+        player.choice.choose(*cards_to_mulligan)
+
+    return game
+
 
 def get_actions(player):
     """
@@ -146,15 +164,18 @@ def perform_action(a, player, game):
         raise
 
 
-def get_state(game):
+def get_state(game, player):
     """
+    Args:
+        game, the current game object
+        player, the player from whose perspective to analyze the state
     return:
         a numpy array features extracted from the
         supplied game.
     """
 
-    p1 = game.current_player
-    p2 = game.current_player.opponent
+    p1 = player
+    p2 = player.opponent
     s = np.zeros(263, dtype=np.int32)
 
     #0-9 player1 class, we subtract 1 here because the classes are from 1 to 10

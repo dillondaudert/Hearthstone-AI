@@ -15,9 +15,11 @@ import tensorflow as tf
 from math import isclose
 from dqn import DQN
 from interface import *
+from exceptions import GameTreeFailure
 from fireplace.game import Game
 from fireplace.player import Player
 from fireplace.exceptions import GameOver, InvalidAction
+from queue import Empty
 import sys
 
 
@@ -61,6 +63,8 @@ def look_ahead(game: Game, dqn: DQN):
     #A queue of (index, numpy array) pairs to evaluate by tf_worker
     s_queue = mp.Queue()
 
+    with mp.Pool() as pool:
+        
 
     tf_proc = mp.Process(target=tf_worker, args=(dqn, s_queue, q_vals))
     tf_proc.start()
@@ -118,9 +122,10 @@ def tf_worker(dqn: DQN, s_queue, q_vals):
             else:
                 q_vals[index] = s_val
             index, state = s_queue.get(True, 5)
-    except:
-        print("Exception! Waited to long for task in state queue.\n")
+    except Empty as e:
+        print("Exception! Waited to long for task in state queue.\n", e)
         sys.stdout.flush()
+        raise GameTreeFailure
         
              
 

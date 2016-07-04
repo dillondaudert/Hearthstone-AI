@@ -31,6 +31,7 @@ def main():
             if game.current_player == ai_player:
                 action_choice = look_ahead(game, dqn)
                 print("Action chosen was: ", action_choice)
+                import pdb; pdb.set_trace()
                 perform_action(action_choice, ai_player, game)
             else:
                 actions = get_actions(game.current_player)

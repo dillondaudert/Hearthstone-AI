@@ -105,7 +105,7 @@ class DQN(object):
 
     def _relu(self, input, l_shape, b_shape):
         #Create weights variable
-        weights = tf.get_variable("weights", l_shape, initializer=tf.random_normal_initializer(0.0, stddev=0.75))
+        weights = tf.get_variable("weights", l_shape, initializer=tf.random_uniform_initializer(-1, 1))
         #Create biases
         biases = tf.get_variable("biases", b_shape, initializer=tf.constant_initializer(0.0))
         #Return layer calculation
