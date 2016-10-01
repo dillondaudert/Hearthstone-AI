@@ -1,8 +1,7 @@
-"""
-run-game.py
--basic UI between the NN and simulation
--utilities to initialize and run games
-"""
+
+#basic UI between the NN and simulation
+#utilities to initialize and run games
+
 
 from fireplace.game import Game
 from fireplace.player import Player
@@ -10,6 +9,7 @@ from fireplace.utils import random_draft
 from fireplace import cards
 from fireplace.exceptions import GameOver, InvalidAction
 from hearthstone.enums import CardClass, CardType
+from exceptions import UnhandledAction
 import random
 import numpy as np
 import sys
@@ -43,6 +43,24 @@ def setup_game():
     game.start()
 
     #Skip mulligan for now
+    for player in game.players:
+        cards_to_mulligan = random.sample(player.choice.cards, 0)
+        player.choice.choose(*cards_to_mulligan)
+
+    return game
+
+def setup_basic_game():
+    p1 = 6 #priest
+    p2 = 7 #rogue
+
+    deck1 = random_draft(CardClass(p1))
+    deck2 = random_draft(CardClass(p2))
+    player1 = Player("Player1", deck1, CardClass(p1).default_hero)
+    player2 = Player("Player2", deck2, CardClass(p2).default_hero)
+    game = Game(players=(player1, player2))
+    game.start()
+
+    #Skip mulligan
     for player in game.players:
         cards_to_mulligan = random.sample(player.choice.cards, 0)
         player.choice.choose(*cards_to_mulligan)
@@ -111,46 +129,53 @@ def perform_action(a, player, game):
         a, a tuple representing (action, index, target)
     """
 
-    if a[0] == "summon":
-        if a[2] is None:
-            player.hand[a[1]].play()
+    try:
+
+        if a[0] == "summon":
+            if a[2] is None:
+                player.hand[a[1]].play()
+            else:
+                player.hand[a[1]].play(a[2])
+        elif a[0] == "spell":
+            if a[2] is None:
+                player.hand[a[1]].play()
+            else:
+                player.hand[a[1]].play(a[2])
+        elif a[0] == "attack":
+            player.field[a[1]].attack(a[2])
+        elif a[0] == "hero_power":
+            if a[2] is None:
+                player.hero.power.use()
+            else:
+                player.hero.power.use(a[2])
+        elif a[0] == "hero_attack":
+            player.hero.attack(a[2])
+        elif a[0] == "end_turn":
+            game.end_turn()
+        elif a[0] == "choose":
+            #print("Player choosing card %r, " % a[1])
+            player.choice.choose(a[1])
         else:
-            player.hand[a[1]].play(a[2])
-    elif a[0] == "spell":
-        if a[2] is None:
-            player.hand[a[1]].play()
-        else:
-            player.hand[a[1]].play(a[2])
-    elif a[0] == "attack":
-        player.field[a[1]].attack(a[2])
-    elif a[0] == "hero_power":
-        if a[2] is None:
-            player.hero.power.use()
-        else:
-            player.hero.power.use(a[2])
-    elif a[0] == "hero_attack":
-        player.hero.attack(a[2])
-    elif a[0] == "end_turn":
-        game.end_turn()
-    elif a[0] == "choose":
-        #print("Player choosing card %r, " % a[1])
-        player.choice.choose(a[1])
+            raise UnhandledAction
+    except UnhandledAction:
+        print("Attempted to take an inappropriate action!\n")
+        print(a)
+    except GameOver:
+        raise
 
 
-def get_state(game):
+def get_state(game, player):
     """
+    Args:
+        game, the current game object
+        player, the player from whose perspective to analyze the state
     return:
-        a list of features extracted from the
+        a numpy array features extracted from the
         supplied game.
-
-    p1 = active player
-
-    *only the cards in hand of the player who's
-     turn it is are evaluated
     """
 
-    p1 = game.current_player
-    p2 = game.current_player.opponent
+    p1 = player
+    p2 = player.opponent
     s = np.zeros(263, dtype=np.int32)
 
     #0-9 player1 class, we subtract 1 here because the classes are from 1 to 10
@@ -242,16 +267,13 @@ def get_state(game):
 
     return s
 
-
-def main():
-
+if __name__ == "__main__":
     initialize()
     game = setup_game()
     try:
         while True:
             if game.current_player.choice:
-                import pdb; pdb.set_trace()
-            actions = get_actions(game.current_player)
+                actions = get_actions(game.current_player)
             index = random.randint(0, len(actions)-1)
             perform_action(actions[index], game.current_player, game)
     except GameOver:
@@ -260,6 +282,3 @@ def main():
         print('Invalid Action: ', err)
     except:
         print('Unexcepted error!!', sys.exc_info()[0])
-
-if __name__ == "__main__":
-    main()
