@@ -3,7 +3,7 @@ src_path = os.path.abspath(os.path.join('..', 'src'))
 sys.path.append(src_path)
 
 import unittest
-from gs_test import GetStateTestCase
+from test_gs import GetStateTestCase
 
 full_test = unittest.TestSuite()
 full_test.addTest(GetStateTestCase("test_player1"))
