@@ -1,26 +1,26 @@
-##AI mechanics
+## AI mechanics
 For all files directly related to the AI's functioning
 
-####ai.py
+#### ai.py
 The driver for the AI
 
-####interface.py
+#### interface.py
 Interface functions with Fireplace API
 - get list of possible actions
 - get state feature vector from Game object
 
-####dec_process.py
+#### dec_process.py
 - build the game tree
 - traverse the action tree to evaluate possible actions
 - return action decision
 - communicate with the trainer to save Markov Decision Process transitions to train on
 
-####trainer.py
+#### trainer.py
 - save state transitions <s, a, r>
 - update parameters using an experience replay
 - uses a target network, updated every t transitions
 
-####dqn.py
+#### dqn.py
 - stores deep q learning network to represent the model
 - used for the evaluator and the target network in the trainer
 
